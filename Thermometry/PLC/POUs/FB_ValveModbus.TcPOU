@@ -1,0 +1,154 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_ValveModbus" Id="{2578ce6f-66ac-4638-a5c3-179a306f2621}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ValveModbus
+VAR_INPUT
+	manMode						: WORD := 4035;
+	manModeData					: WORD := 1;
+	posMode						: WORD := 4036;
+	posData						: WORD;
+	posActual					: WORD:= 4067;
+	f_state						: UINT := 1;
+	f_nextState					: UINT;//:= 0;
+	f_mbReadAddr				: WORD; //:= 4067;
+	f_mbWriteAddr 				: WORD;//:= 16#D000;
+	f_mbWriteData 				: WORD;
+END_VAR
+VAR_OUTPUT
+	f_mbReadData				: WORD;
+	posActualData				: WORD;
+END_VAR
+VAR
+//	f_mbMaster					: ModbusRtuMaster_KL6x22B;
+	idx							: WORD;
+	f_mbInputAddr 				: WORD;//:= 16#D000;
+	f_mbInputData 				: WORD;
+	f_mbUnit					: BYTE := 1;
+	f_mbErrorId					: MODBUS_ERRORS;
+	f_mbErrorFlag				: BOOL;
+	f_mbBusy					: BOOL;
+	f_mbBytesRec				: UINT;
+	f_inputs					: ARRAY [0..1, 16#00 .. 16#26] OF UINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE f_state OF
+
+1: // write register
+	GVL.f_mbMaster.WriteSingleRegister(
+		UnitID:= f_mbUnit, 
+		Quantity:= 1, 
+		MBAddr:= manMode,//f_mbWriteAddr, 
+		cbLength:= SIZEOF(manModeData), 
+		pMemoryAddr:= ADR(manModeData), 
+		Execute:= TRUE, 
+		Timeout:= T#1S, 
+		BUSY=> f_mbBusy, 
+		Error=> f_mbErrorFlag, 
+		ErrorId=> f_mbErrorId, 
+		cbRead=> f_mbBytesRec
+	);
+
+	// write complete
+	IF f_mbBusy = FALSE THEN
+		// reset comms
+		GVL.f_mbMaster.ReadRegs(Execute := FALSE);
+		f_nextState := 3;
+		f_state := f_nextState;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 10;
+		END_IF
+	END_IF
+2:
+	f_nextState := 3;
+	f_state := f_nextState;
+3:
+GVL.f_mbMaster.WriteSingleRegister(
+		UnitID:= f_mbUnit, 
+		Quantity:= 1, 
+		MBAddr:= posMode, 
+		cbLength:= SIZEOF(posData), 
+		pMemoryAddr:= ADR(posData), 
+		Execute:= TRUE, 
+		Timeout:= T#1S, 
+		BUSY=> f_mbBusy, 
+		Error=> f_mbErrorFlag, 
+		ErrorId=> f_mbErrorId, 
+		cbRead=> f_mbBytesRec
+	);
+
+	// write complete
+	IF f_mbBusy = FALSE THEN
+		// reset comms
+		GVL.f_mbMaster.ReadRegs(Execute := FALSE);
+		f_nextState := 5;
+		f_state := f_nextState;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 10;
+		END_IF
+	END_IF
+4:
+	f_nextState := 5;
+	f_state := f_nextState;
+5:
+GVL.f_mbMaster.ReadRegs(
+		UnitID:= f_mbUnit, 
+		Quantity:= 1, 
+		MBAddr:= posActual, 
+		cbLength:= SIZEOF(posActualData), 
+		pMemoryAddr:= ADR(posActualData), 
+		Execute:= TRUE, 
+		Timeout:= T#1S, 
+		BUSY=> f_mbBusy, 
+		Error=> f_mbErrorFlag, 
+		ErrorId=> f_mbErrorId, 
+		cbRead=> f_mbBytesRec
+	);
+
+	// read complete
+	IF f_mbBusy = FALSE THEN
+		// reset comms
+		GVL.f_mbMaster.ReadRegs(Execute := FALSE);
+		f_nextState := 1;
+		f_state := f_nextState;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 10;
+		END_IF
+	END_IF
+6:
+	f_nextState := 1;
+	f_state := f_nextState;
+10:
+	f_mbErrorFlag := FALSE;
+	f_state := 1;
+
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ValveModbus">
+      <LineId Id="57" Count="1" />
+      <LineId Id="10" Count="24" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="62" Count="0" />
+      <LineId Id="65" Count="0" />
+      <LineId Id="64" Count="0" />
+      <LineId Id="66" Count="0" />
+      <LineId Id="97" Count="23" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="125" Count="0" />
+      <LineId Id="123" Count="0" />
+      <LineId Id="95" Count="0" />
+      <LineId Id="68" Count="23" />
+      <LineId Id="67" Count="0" />
+      <LineId Id="63" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="159" Count="1" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="59" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

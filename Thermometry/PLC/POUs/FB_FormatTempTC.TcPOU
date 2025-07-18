@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_FormatTempTC" Id="{27e564aa-d119-48fd-930e-c2749f763c54}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FormatTempTC
+VAR_INPUT
+	sTempRaw 			: STRING;
+END_VAR
+VAR_OUTPUT
+	tempArray 			: ARRAY[0..31] OF STRING;
+END_VAR
+VAR
+	ArrayPos 			: STRING;
+	subString			: STRING;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// If string value is first value (presents w/ '$R$N'), extract both the 31st and 0th temperature value
+IF FIND(sTempRaw, '$R$N') > 0 THEN
+	tempArray[31] := MID(sTempRaw, 10, 6);
+	tempArray[0] := RIGHT(sTempRaw, 11);
+ELSE
+	ArrayPos := MID(sTempRaw, 2, 3); // Find what temperature value is being read from string
+	
+	IF ArrayPos <> '00' THEN // If its the 0th, ignore to avoid duplicate read with spurious value
+		tempArray[TO_INT(ArrayPos)] := MID(sTempRaw, 10, 6);
+	END_IF
+END_IF
+ 
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_FormatTempTC">
+      <LineId Id="254" Count="0" />
+      <LineId Id="253" Count="0" />
+      <LineId Id="251" Count="1" />
+      <LineId Id="229" Count="0" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="247" Count="1" />
+      <LineId Id="240" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="241" Count="0" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="191" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

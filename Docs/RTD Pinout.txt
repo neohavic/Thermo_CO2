@@ -1,0 +1,7 @@
+1 = shield : Black
+2 = TX+ : Brown
+6 = TX- : Green
+3 = RX+ : Red
+7 = RX- : Blue
+5 = Vpwr- : Yellow
+9 = Vpwr+ : White

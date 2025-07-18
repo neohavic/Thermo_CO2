@@ -1,0 +1,2 @@
+Outside dim = 200mm
+Beaker dim = 145mm

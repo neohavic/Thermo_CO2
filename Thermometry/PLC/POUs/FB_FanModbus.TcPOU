@@ -1,0 +1,226 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_FanModbus" Id="{99482bd6-01b4-4683-b195-e210aa7ea452}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FanModbus
+VAR_INPUT
+	f_state						: UINT ;//:= 0;
+	f_nextState					: UINT ;//:= 0;
+	f_mbReadAddr				: WORD ;//:= 16#D000;
+	f_mbWriteAddr 				: WORD ;//:= 16#D000;
+	f_mbWriteData 				: WORD;
+	f_mbRPM						: WORD;
+END_VAR
+VAR_OUTPUT
+	f_tachometerData 			: REAL;
+	f_mbReadData				: WORD;
+	f_speedNominal 				: WORD;	
+END_VAR
+VAR
+	f_mbMaster					: ModbusRtuMaster_KL6x22B;
+	idx							: WORD;
+	f_mbInputAddr 				: WORD;//:= 16#D000;
+	f_mbInputData 				: WORD;
+	f_mbUnit					: BYTE := 1;
+	f_mbErrorId					: MODBUS_ERRORS;
+	f_mbErrorFlag				: BOOL;
+	f_mbBusy					: BOOL;
+	f_mbBytesRec				: UINT;
+	f_inputs					: ARRAY [0..1, 16#00 .. 16#26] OF UINT;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE f_state OF
+0: // init, reset
+	FOR idx := 0 TO 16#26 DO
+		f_inputs[0, idx] := 16#D000 + idx;
+	END_FOR
+	f_mbInputAddr := 16#D010;
+	idx := 0;
+	f_nextState := 1;
+	f_state := 1;
+
+1: // read input registers
+	f_mbMaster.ReadInputRegs(
+		UnitID:= f_mbUnit, 
+		Quantity:= 1, 
+		MBAddr:= 16#D010,//f_mbInputAddr, 
+		cbLength:= SIZEOF(f_mbInputData), 
+		pMemoryAddr:= ADR(f_mbInputData), 
+		Execute:= TRUE, 
+		Timeout:= T#1S, 
+		BUSY=> f_mbBusy, 
+		Error=> f_mbErrorFlag, 
+		ErrorId=> f_mbErrorId, 
+		cbRead=> f_mbBytesRec
+	);
+
+	// if not busy, move to next input register
+	IF f_mbBusy = FALSE THEN
+		f_inputs[1, 16#10] := f_mbInputData;
+		f_mbInputAddr := 16#D010;//f_mbInputAddr + 1;
+		//idx := idx + 1;
+		//IF idx > 16#26 THEN
+		//	idx := 0;
+		//	f_mbInputAddr := 16#D000;
+		//END_IF
+		
+		//Read tachometer data. This is not the fastest 
+		//sampling rate of the actual speed value, since
+		//it is only measured once every 26 cycles.
+		f_tachometerData := (f_inputs[1,16#10] * 16#802) / 16#FA00;
+		
+		// reset comms and go to next state
+		f_mbMaster.ReadInputRegs(Execute := FALSE);
+		f_state := f_nextState;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 4;
+		END_IF
+	END_IF
+	
+2: // read holding register
+	f_mbMaster.ReadRegs(
+		UnitID:= f_mbUnit, 
+		Quantity:= 1, 
+		MBAddr:= f_mbReadAddr, 
+		cbLength:= SIZEOF(f_mbReadData), 
+		pMemoryAddr:= ADR(f_mbReadData), 
+		Execute:= TRUE, 
+		Timeout:= T#1S, 
+		BUSY=> f_mbBusy, 
+		Error=> f_mbErrorFlag, 
+		ErrorId=> f_mbErrorId, 
+		cbRead=> f_mbBytesRec
+	);
+
+	// read complete
+	IF f_mbBusy = FALSE THEN
+		// reset comms
+		f_mbMaster.ReadRegs(Execute := FALSE);
+		f_nextState := 1;
+		f_state := f_nextState;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 4;
+		END_IF
+	END_IF
+	
+3: // write register
+	f_mbMaster.WriteSingleRegister(
+		UnitID:= f_mbUnit, 
+		Quantity:= 1, 
+		MBAddr:= f_mbWriteAddr, 
+		cbLength:= SIZEOF(f_mbWriteData), 
+		pMemoryAddr:= ADR(f_mbWriteData), 
+		Execute:= TRUE, 
+		Timeout:= T#1S, 
+		BUSY=> f_mbBusy, 
+		Error=> f_mbErrorFlag, 
+		ErrorId=> f_mbErrorId, 
+		cbRead=> f_mbBytesRec
+	);
+
+	// write complete
+	IF f_mbBusy = FALSE THEN
+		// reset comms
+		f_mbMaster.ReadRegs(Execute := FALSE);
+		f_nextState := 1;
+		f_state := f_nextState;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 4;
+		END_IF
+	END_IF
+
+4: // error, wait for reset
+
+5: //RPM set
+	f_mbWriteAddr := 16#D001 ;
+	f_mbWriteData := ( f_mbRPM * 16#FA00 ) / 16#802;
+	
+	// write register
+	f_mbMaster.WriteSingleRegister(
+		UnitID:= f_mbUnit, 
+		Quantity:= 1, 
+		MBAddr:= f_mbWriteAddr, 
+		cbLength:= SIZEOF(f_mbWriteData), 
+		pMemoryAddr:= ADR(f_mbWriteData), 
+		Execute:= TRUE, 
+		Timeout:= T#1S, 
+		BUSY=> f_mbBusy, 
+		Error=> f_mbErrorFlag, 
+		ErrorId=> f_mbErrorId, 
+		cbRead=> f_mbBytesRec
+	);
+
+	// write complete
+	IF f_mbBusy = FALSE THEN
+		// reset comms
+		f_mbMaster.ReadRegs(Execute := FALSE);
+		f_nextState := 1;
+		f_state := f_nextState;
+		
+		//Set RPM nominal output
+		f_speedNominal := f_mbRPM;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 4;
+		END_IF
+	END_IF
+
+//NOTE need to add 
+	
+6:
+	f_mbWriteAddr := 16#D001 ;
+	f_mbWriteData := 16#0000 ;
+	
+	// write register
+	f_mbMaster.WriteSingleRegister(
+		UnitID:= f_mbUnit, 
+		Quantity:= 1, 
+		MBAddr:= f_mbWriteAddr, 
+		cbLength:= SIZEOF(f_mbWriteData), 
+		pMemoryAddr:= ADR(f_mbWriteData), 
+		Execute:= TRUE, 
+		Timeout:= T#1S, 
+		BUSY=> f_mbBusy, 
+		Error=> f_mbErrorFlag, 
+		ErrorId=> f_mbErrorId, 
+		cbRead=> f_mbBytesRec
+	);
+
+	// write complete
+	IF f_mbBusy = FALSE THEN
+		// reset comms
+		f_mbMaster.ReadRegs(Execute := FALSE);
+		f_nextState := 1;
+		f_state := f_nextState;
+		
+		//Set RPM nominal output
+		f_speedNominal := f_mbWriteData;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 4;
+		END_IF
+	END_IF
+
+ELSE // stop
+	
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="FB_FanModbus">
+      <LineId Id="4569" Count="22" />
+      <LineId Id="4785" Count="0" />
+      <LineId Id="4592" Count="37" />
+      <LineId Id="4786" Count="0" />
+      <LineId Id="4630" Count="25" />
+      <LineId Id="4787" Count="0" />
+      <LineId Id="4656" Count="13" />
+      <LineId Id="4671" Count="1" />
+      <LineId Id="4674" Count="15" />
+      <LineId Id="4788" Count="0" />
+      <LineId Id="4690" Count="34" />
+      <LineId Id="4789" Count="0" />
+      <LineId Id="4725" Count="18" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

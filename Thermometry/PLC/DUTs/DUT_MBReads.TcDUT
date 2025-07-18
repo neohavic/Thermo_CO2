@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="DUT_MBReads" Id="{eadc3ea1-1e80-4df8-b513-177f220b909f}">
+    <Declaration><![CDATA[TYPE DUT_MBReads EXTENDS DUT_MB :
+STRUCT
+	cbRead:UDINT;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

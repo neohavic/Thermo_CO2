@@ -1,0 +1,76 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_MoveStepperRel" Id="{0bea6b41-c696-4199-8c4b-86405a4a07f9}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_MoveStepperRel
+VAR_INPUT
+	stepsToMove				: INT;
+	PosCurrent				: UDINT;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	Step 					: INT := 0;
+	bPowerOn				: INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[MAIN.fbAxis1.bEnable := TRUE;
+
+CASE Step OF
+0:
+	//MAIN.fbAxis1.moveRelDist := 0.0;
+	//MAIN.fbAxis1.moveRelVel := 0.0;
+	//MAIN.fbAxis1.bMoveRelExe := FALSE;
+	MAIN.fbAxis1.bHaltExe := FALSE;
+	Step := 1;
+1:
+
+	IF MAIN.fbAxis1.bPwrStatus THEN
+		MAIN.fbAxis1.moveRelDist := stepsToMove;
+		MAIN.fbAxis1.moveRelVel := 100;
+		MAIN.fbAxis1.bMoveRelExe := TRUE;
+		IF MAIN.fbAxis1.bMoveRelDone THEN
+			MAIN.fbAxis1.bMoveRelExe := FALSE;
+			MAIN.fbAxis1.bHaltExe := TRUE;
+			Step := 2;
+		END_IF
+	END_IF	
+2:
+	IF MAIN.fbAxis1.bHaltDone = TRUE THEN
+		MAIN.fbAxis1.bHaltExe := FALSE;
+	END_IF
+
+	MAIN.bMoveRelative := FALSE;
+	
+	Step := 0;
+END_CASE
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_MoveStepperRel">
+      <LineId Id="63" Count="1" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="12" Count="0" />
+      <LineId Id="26" Count="0" />
+      <LineId Id="67" Count="1" />
+      <LineId Id="79" Count="0" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="21" Count="0" />
+      <LineId Id="88" Count="0" />
+      <LineId Id="72" Count="5" />
+      <LineId Id="89" Count="0" />
+      <LineId Id="115" Count="0" />
+      <LineId Id="78" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="83" Count="0" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="92" Count="0" />
+      <LineId Id="91" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="86" Count="0" />
+      <LineId Id="13" Count="0" />
+      <LineId Id="20" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

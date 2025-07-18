@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_SerialCom" Id="{ade167a9-d818-48a7-a5dc-a6502c1a61c4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SerialCom
+VAR_IN_OUT
+	TxBuffer			: ComBuffer;
+	RxBuffer			: ComBuffer;
+END_VAR
+VAR
+	fbReceive			: ReceiveString;
+
+	sReceivedString		: STRING;
+	sLastReceivedString	: STRING;
+	bStringReceived		: BOOL;
+	bReceiveBusy		: BOOL;
+	bReceiveError		: BOOL;
+	eReceiveErrorID		: ComError_t;
+	bReceiveTimeout		: BOOL;
+	pSendData : POINTER TO BYTE;
+    Length : UDINT;
+END_VAR
+VAR_INPUT
+	prefix				: STRING;
+	suffix				: STRING;
+	fbSendData			: SendData;
+END_VAR
+VAR_OUTPUT
+	msgOUT				: STRING;
+	errorID				: ComError_t;
+	Busy 				: BOOL;
+    Error 				: ComError_t;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//	Receive string data:
+//	The block receives any data strings beginning with a STX ($02) and ending with an ETX ($03) character.	
+
+fbReceive(
+	Prefix := prefix,
+	Suffix := suffix,
+	Timeout := T#1S,
+	ReceivedString := msgOUT,
+	RXbuffer := RxBuffer,
+	StringReceived => bStringReceived,
+	Busy => bReceiveBusy,
+	Error => errorID,
+	RxTimeout => bReceiveTimeout );
+IF fbReceive.Error <> COMERROR_NOERROR THEN
+	eReceiveErrorID := fbReceive.Error;
+END_IF
+
+fbSendData(
+	pSendData := ADR(pSendData),
+	Length := SIZEOF(pSendData),
+	Busy => Busy,
+	Error => Error,
+	TXBuffer := GVL.TxBufferEL_MB
+	);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SerialCom">
+      <LineId Id="53" Count="15" />
+      <LineId Id="94" Count="0" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="100" Count="5" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

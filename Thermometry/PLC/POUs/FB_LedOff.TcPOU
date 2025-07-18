@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_LedOff" Id="{131b0eb6-a0ec-4892-ad5a-990130f7d082}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_LedOff
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	state : INT := 0;
+	fbSerialSend : FB_SerialCom;
+	d0 : BYTE := 16#01;
+	d1 : BYTE := 16#44;
+	d2 : BYTE := 16#00;
+	d3 : BYTE := 16#13;
+	d4 : BYTE := 16#00;
+	fbSendData : SendData;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+BackGroundEL.stOut_EL6002_MB.D[0] := 16#01;
+BackGroundEL.stOut_EL6002_MB.D[1] := 16#44;
+BackGroundEL.stOut_EL6002_MB.D[2] := 16#00;
+BackGroundEL.stOut_EL6002_MB.D[3] := 16#13;
+BackGroundEL.stOut_EL6002_MB.D[4] := 16#00;
+*)
+(*
+CASE state OF 
+0:
+fbSerialSend(
+	TxBuffer := GVL.TxBufferEL_MB,
+	RxBuffer := GVL.RxBufferEL_MB,
+	fbSendData := fbSendData.pSendData,
+	Busy =>,
+	Error =>
+	);
+	IF fbSerialSend.Busy = FALSE THEN
+		state := state + 1;
+	END_IF
+1:
+fbSerialSend(
+	TxBuffer := GVL.TxBufferEL_MB,
+	RxBuffer := GVL.RxBufferEL_MB,
+	fbSendData := d0,
+	Busy =>,
+	Error =>
+	);
+	IF fbSerialSend.Busy = FALSE THEN
+		state := state + 1;
+	END_IF
+2:
+fbSerialSend(
+	TxBuffer := GVL.TxBufferEL_MB,
+	RxBuffer := GVL.RxBufferEL_MB,
+	fbSendData := d0,
+	Busy =>,
+	Error =>
+	);
+	IF fbSerialSend.Busy = FALSE THEN
+		state := state + 1;
+	END_IF
+3:
+fbSerialSend(
+	TxBuffer := GVL.TxBufferEL_MB,
+	RxBuffer := GVL.RxBufferEL_MB,
+	fbSendData := d0,
+	Busy =>,
+	Error =>
+	);
+	IF fbSerialSend.Busy = FALSE THEN
+		state := state + 1;
+	END_IF
+4:
+fbSerialSend(
+	TxBuffer := GVL.TxBufferEL_MB,
+	RxBuffer := GVL.RxBufferEL_MB,
+	fbSendData := d0,
+	Busy =>,
+	Error =>
+	);
+	IF fbSerialSend.Busy = FALSE THEN
+		state := 0;
+	END_IF
+END_CASE
+*)
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="FB_LedOff">
+      <LineId Id="99" Count="0" />
+      <LineId Id="9" Count="0" />
+      <LineId Id="12" Count="3" />
+      <LineId Id="42" Count="0" />
+      <LineId Id="100" Count="0" />
+      <LineId Id="25" Count="0" />
+      <LineId Id="43" Count="0" />
+      <LineId Id="46" Count="5" />
+      <LineId Id="45" Count="0" />
+      <LineId Id="84" Count="2" />
+      <LineId Id="52" Count="0" />
+      <LineId Id="54" Count="5" />
+      <LineId Id="53" Count="0" />
+      <LineId Id="88" Count="1" />
+      <LineId Id="87" Count="0" />
+      <LineId Id="60" Count="0" />
+      <LineId Id="62" Count="5" />
+      <LineId Id="61" Count="0" />
+      <LineId Id="91" Count="1" />
+      <LineId Id="90" Count="0" />
+      <LineId Id="68" Count="0" />
+      <LineId Id="70" Count="5" />
+      <LineId Id="69" Count="0" />
+      <LineId Id="94" Count="1" />
+      <LineId Id="93" Count="0" />
+      <LineId Id="76" Count="0" />
+      <LineId Id="78" Count="5" />
+      <LineId Id="77" Count="0" />
+      <LineId Id="97" Count="1" />
+      <LineId Id="96" Count="0" />
+      <LineId Id="44" Count="0" />
+      <LineId Id="40" Count="0" />
+      <LineId Id="11" Count="0" />
+      <LineId Id="10" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

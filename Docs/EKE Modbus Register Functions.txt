@@ -1,0 +1,22 @@
+19200 Baud
+8E1
+
+
+Enter Service State, Reg #3177, 0 = Off 1 = On
+Restore Defaults, Reg #4040, 0 = None, 1 = Factory
+Service Num of Steps, Reg #4071, Min -32767, Max 32767
+
+Valve current pos, Reg #4067, Min 0, Max 10000 (Read Only)
+Valve target pos, Reg #4068, Min 0, Max 10000 (Read Only)
+
+Valve config, Reg #3131, 22 = CCMT4
+Valve step positioning, Reg #3134, 0 = Full step, 1 = Halfstep, 2 = Auto
+Valve total steps, Reg #3135
+
+Manual Mode, Reg #4035, 0 = Off 1 = On
+Manual Mode Active, bit 2, Read Only
+Manual Mode Opening Degree, Reg #4036, Min 0, Max 100 (x10)
+Manual Step, Reg #4037, Min 0, Max 8000 (Doesnt seem to work)
+Manual Homeing, Reg #4038, 0 = Off 1 = On
+
+Modbus Main Switch, Reg #4045, 0 = Off 1 = On

@@ -1,0 +1,116 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <POU Name="FB_FormatTempRTD" Id="{aaba04ae-91ec-4ea6-b44c-32fc3fd03f29}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FormatTempRTD
+VAR_INPUT
+	sTempRaw 			: STRING;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	RTDarray			: ARRAY[0..9] OF STRING;
+	ArrayPos			: INT := 1;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[(*
+sArrayPos := MID(sTempRaw, 2, 3);
+IF sArrayPos <> '' THEN
+	ArrayPos := TO_INT(MID(sTempRaw, 2, 3)); // Find what temperature value is being read from string
+	ArrayPos := ArrayPos - 1;
+
+	RTDarray[ArrayPos] := MID(sTempRaw, 11, 6);
+END_IF
+*)
+(*
+// If string value is first value (presents w/ '$R$N'), extract both the 31st and 0th temperature value
+IF FIND(sTempRaw, '$R$N') > 0 THEN
+	tempArray[9] := MID(sTempRaw, 10, 6);
+	tempArray[0] := RIGHT(sTempRaw, 11);
+ELSE
+	ArrayPos := STRING_TO_INT(MID(sTempRaw, 2, 3)); // Find what temperature value is being read from string
+	
+	IF INT_TO_STRING(ArrayPos) <> '00' THEN // If its the 0th, ignore to avoid duplicate read with spurious value
+		tempArray[TO_INT(ArrayPos)] := MID(sTempRaw, 10, 6);
+	END_IF
+END_IF
+*)
+
+IF FIND(sTempRaw, '°C01') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C01');
+	RTDarray[0] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C02') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C02');
+	RTDarray[1] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C03') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C03');
+	RTDarray[2] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C04') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C04');
+	RTDarray[3] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C05') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C05');
+	RTDarray[4] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C06') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C06');
+	RTDarray[5] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C07') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C07');
+	RTDarray[6] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C08') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C08');
+	RTDarray[7] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C09') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C09');
+	RTDarray[8] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF
+IF FIND(sTempRaw, '°C10') > 0 THEN
+	ArrayPos := FIND(sTempRaw, '°C10');
+	RTDarray[9] := MID(sTempRaw, 11, ArrayPos + 5);
+END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_FormatTempRTD">
+      <LineId Id="260" Count="0" />
+      <LineId Id="245" Count="0" />
+      <LineId Id="231" Count="1" />
+      <LineId Id="242" Count="0" />
+      <LineId Id="249" Count="0" />
+      <LineId Id="235" Count="0" />
+      <LineId Id="246" Count="0" />
+      <LineId Id="239" Count="0" />
+      <LineId Id="262" Count="10" />
+      <LineId Id="261" Count="0" />
+      <LineId Id="278" Count="0" />
+      <LineId Id="349" Count="0" />
+      <LineId Id="299" Count="0" />
+      <LineId Id="297" Count="0" />
+      <LineId Id="277" Count="0" />
+      <LineId Id="300" Count="0" />
+      <LineId Id="302" Count="2" />
+      <LineId Id="301" Count="0" />
+      <LineId Id="306" Count="2" />
+      <LineId Id="305" Count="0" />
+      <LineId Id="310" Count="2" />
+      <LineId Id="309" Count="0" />
+      <LineId Id="314" Count="2" />
+      <LineId Id="313" Count="0" />
+      <LineId Id="318" Count="2" />
+      <LineId Id="317" Count="0" />
+      <LineId Id="322" Count="2" />
+      <LineId Id="321" Count="0" />
+      <LineId Id="326" Count="2" />
+      <LineId Id="325" Count="0" />
+      <LineId Id="330" Count="2" />
+      <LineId Id="329" Count="0" />
+      <LineId Id="334" Count="2" />
+      <LineId Id="333" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

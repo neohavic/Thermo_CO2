@@ -1,0 +1,54 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.7">
+  <POU Name="FB_ModBusTCPReadRegs" Id="{22dae773-925e-4984-929c-b7116a92d905}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ModBusTCPReadRegs
+VAR_INPUT
+    sIPAddr    			: STRING(15);
+    nTCPPort   			: UINT:= MODBUS_TCP_PORT;
+    nUnitID    			: BYTE:=16#FF;
+    nQuantity  			: WORD;
+    nMBAddr    			: WORD;
+    cbLength   			: UDINT;
+    pDestAddr  			: POINTER TO BYTE;
+    bExecute   			: BOOL;
+    tTimeout   			: TIME;
+END_VAR 
+VAR_OUTPUT
+    bBUSY      			: BOOL;
+    bError     			: BOOL;
+    nErrId     			: UDINT;
+    cbRead     			: UDINT;
+END_VAR 
+VAR
+    fbReadRegs        	: FB_MBReadRegs;
+    bReadRegs         	: BOOL;
+    bReadRegsBusy     	: BOOL;
+    bReadRegsError    	: BOOL;
+    nReadRegsErrorId  	: UDINT;
+    nReadRegsCount    	: UDINT;
+    arrData           	: ARRAY [1..2] OF WORD;
+END_VAR 
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Read the Regs from Modbus Server Function 3
+fbReadRegs(
+	sIPAddr := sIPAddr,					//Is a string containing the IP address of the target device
+	nTCPPort := MODBUS_TCP_PORT,		//Port number of the target device
+	nUnitID := 255,						//Identification number of a serial sub-network device, 16$FF if TCP/IP is used
+	nQuantity := 10,					//Number of output registers (data words) to be read. The value of nQuantity must be > 0 
+	nMBAddr := 0,						//Start address of the output registers to be read (word offset)
+	cbLength := SIZEOF(arrData),		//Contains the max. byte size of the destination buffer. 
+	pDestAddr := ADR(arrData),			//Contains the address of the destination buffer into which the data are to be read
+	bExecute := fbReadRegs.bExecute,	//The function block is activated by a rising edge at this input
+	tTimeout := T#1S,					//States the length of the timeout that may not be exceeded by execution of the ADS command
+	bBusy => bBusy,							//When the function block is activated this output is set
+	bError => bError,							//True if If an ADS error should occur during the transfer of the command
+	nErrId => nErrId,							//Supplies the ADS error number when the bError output is set.
+	cbRead => cbRead						//Contains the number of bytes currently read.
+	);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ModBusTCPReadRegs">
+      <LineId Id="1" Count="15" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,166 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_SanityCheck" Id="{d9c07b72-0bd9-4bfe-90f9-579fa9f0ea44}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_SanityCheck
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	Delay 			: TON;
+	step			: INT := 1;
+	out1 AT %Q* 	: BOOL;
+	out2 AT %Q*		: BOOL;
+	out3 AT %Q*		: BOOL;
+	out4 AT %Q*		: BOOL;
+	out5 AT %Q*		: BOOL;
+	out6 AT %Q*		: BOOL;
+	out7 AT %Q*		: BOOL;
+	out8 AT %Q*		: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[CASE step OF
+1:
+	IF out1 = FALSE THEN
+		out1 := TRUE;
+		ELSE
+			out1 := FALSE; 
+	END_IF
+	
+	Delay(IN:=TRUE, PT:=T#1S);
+	IF NOT(Delay.Q) THEN
+  		RETURN;
+	END_IF
+	
+	Delay(IN:=FALSE);
+	
+	step := step + 1;
+
+2:
+	IF out2 = FALSE THEN
+		out2 := TRUE;
+		ELSE
+			out2 := FALSE;
+	END_IF
+	
+	Delay(IN:=TRUE, PT:=T#1S);
+	
+	IF NOT(Delay.Q) THEN
+    	RETURN;
+	END_IF
+	
+	Delay(IN:=FALSE);
+	
+	step := step + 1;
+	
+3:
+	IF out3 = FALSE THEN
+		out3 := TRUE;
+		ELSE
+			out3 := FALSE;
+	END_IF
+	
+	Delay(IN:=TRUE, PT:=T#1S);
+	
+	IF NOT(Delay.Q) THEN
+   		RETURN;
+	END_IF
+	
+	Delay(IN:=FALSE);
+
+	step := step + 1;
+	
+4:
+	IF out4 = FALSE THEN
+		out4 := TRUE;
+		ELSE
+			out4 := FALSE;
+	END_IF
+	
+	Delay(IN:=TRUE, PT:=T#1S);
+	
+	IF NOT(Delay.Q) THEN
+    	RETURN;
+	END_IF
+	
+	Delay(IN:=FALSE);
+	
+	step := step + 1;
+	
+5:
+	IF out5 = FALSE THEN
+		out5 := TRUE;
+		ELSE
+			out5 := FALSE;
+	END_IF
+	
+	Delay(IN:=TRUE, PT:=T#1S);
+	
+	IF NOT(Delay.Q) THEN
+    	RETURN;
+	END_IF
+	
+	Delay(IN:=FALSE);
+	
+	step := step + 1;
+	
+6:
+	IF out6 = FALSE THEN
+		out6 := TRUE;
+		ELSE
+			out6 := FALSE;
+	END_IF
+	
+	Delay(IN:=TRUE, PT:=T#1S);
+	
+	IF NOT(Delay.Q) THEN
+    	RETURN;
+	END_IF
+
+	Delay(IN:=FALSE);
+
+	step := step + 1;
+	
+7:
+	IF out7 = FALSE THEN
+		out7 := TRUE;
+		ELSE
+			out7 := FALSE;
+	END_IF
+	
+	Delay(IN:=TRUE, PT:=T#1S);
+	
+	IF NOT(Delay.Q) THEN
+    	RETURN;
+	END_IF
+
+	Delay(IN:=FALSE);
+
+	step := step + 1;
+	
+8:
+	IF out8 = FALSE THEN
+		out8 := TRUE;
+		ELSE
+			out8 := FALSE;
+	END_IF
+	
+	Delay(IN:=TRUE, PT:=T#1S);
+	
+	IF NOT(Delay.Q) THEN
+    	RETURN;
+	END_IF
+	
+	Delay(IN:=FALSE);
+
+	step := 1;
+	
+END_CASE]]></ST>
+    </Implementation>
+    <LineIds Name="FB_SanityCheck">
+      <LineId Id="27" Count="135" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

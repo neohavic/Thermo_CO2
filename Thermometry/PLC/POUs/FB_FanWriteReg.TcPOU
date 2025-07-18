@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.7">
+  <POU Name="FB_FanWriteReg" Id="{2f427898-3e5f-4793-be3a-59a30d65936b}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_FanWriteReg
+VAR_INPUT
+	f_mbMaster			: ModbusRtuMaster_KL6x22B;
+	f_mbUnit			: BYTE;
+	f_mbWriteAddr 		: WORD;
+	f_mbWriteData 		: WORD;
+END_VAR
+
+VAR_OUTPUT
+	f_mbErrorFlag		: BOOL;
+	f_mbErrorId			: MODBUS_ERRORS;
+	f_mbBusy			: BOOL;
+	f_mbBytesRec		: UINT;	
+	f_state				: UINT;
+	f_nextState			: UINT;
+END_VAR
+
+VAR
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// write register
+
+	f_mbMaster.WriteSingleRegister(
+		UnitID := f_mbUnit, 
+		Quantity := 1, 
+		MBAddr := f_mbWriteAddr, 
+		cbLength := SIZEOF(f_mbWriteData), 
+		pMemoryAddr := ADR(f_mbWriteData), 
+		Execute := TRUE, 
+		Timeout := T#1S, 
+		BUSY => f_mbBusy, 
+		Error => f_mbErrorFlag, 
+		ErrorId => f_mbErrorId, 
+		cbRead => f_mbBytesRec
+	);
+
+	// write complete
+	IF f_mbBusy = FALSE THEN
+		// reset comms
+		f_mbMaster.ReadRegs(Execute := FALSE);
+		f_nextState := 1;
+		f_state := f_nextState;
+		// catch error
+		IF f_mbErrorFlag = TRUE THEN
+			f_state := 4;
+		END_IF
+	END_IF]]></ST>
+    </Implementation>
+    <LineIds Name="FB_FanWriteReg">
+      <LineId Id="101" Count="13" />
+      <LineId Id="147" Count="0" />
+      <LineId Id="115" Count="10" />
+      <LineId Id="9" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

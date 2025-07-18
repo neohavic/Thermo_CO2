@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.12">
+  <GVL Name="GVL" Id="{154ed67c-b18d-4faf-b2c1-6f14fed8222c}">
+    <Declaration><![CDATA[VAR_GLOBAL
+	RxBufferEL_RTD				: ComBuffer;		(* Receive data buffer; used with all receive function blocks *)
+	TxBufferEL_RTD				: ComBuffer;		(* Transmit data buffer; used with all receive function blocks *)
+	RxBufferEL_TC				: ComBuffer;		(* Receive data buffer; used with all receive function blocks *)
+	TxBufferEL_TC				: ComBuffer;		(* Transmit data buffer; used with all receive function blocks *)
+	RxBufferEL_Flow				: ComBuffer;
+	TxBufferEL_Flow				: ComBuffer;
+	RxBufferEL_MB				: ComBuffer;
+	TxBufferEL_MB				: ComBuffer;
+	f_mbMaster					: ModbusRtuMaster_KL6x22B;
+	
+	MAX_CSV_ROWS 				: UDINT := 100;
+	MAX_CSV_COLUMNS 			: UDINT := 5;
+	MAX_CSV_FIELD_LENGTH		: UDINT := 100;
+(*	
+// AXIS 1 CONTROL VARIABLES
+	bEnable1				 	: BOOL := FALSE;	(* Axis enabled state *)
+	bMove_Absolute1			 	: BOOL := FALSE;	(* Starts an absolute motion *)
+	bJogFwd1				 	: BOOL := FALSE;	(* Starts rotating the axis at constant speed with CW direction *)
+	bJogBack1				 	: BOOL := FALSE;	(* Starts rotating the axis at constant speed with CCCW direction *)
+	bReset1					 	: BOOL := FALSE;	(* Resets the axis *)
+	bHalt1					 	: BOOL := FALSE;	(* Stops the axis *)
+	bStop1					 	: BOOL := FALSE;	(* Stops the axis *)
+	bestop1					 	: BOOL := TRUE;		(* ESTOP button status *)
+	bMove_Jog1				 	: BOOL := FALSE;	(* Starts actual motion *)
+	bJogC1					 	: BOOL := FALSE;	(* Final Jog flag *)
+	position1 					: UDINT;
+	
+// AXIS 2 CONTROL VARIABLES
+	bEnable2				 	: BOOL := FALSE;	(* Axis enabled state *)
+	bMove_Absolute2			 	: BOOL := FALSE;	(* Starts an absolute motion *)
+	bJogFwd2				 	: BOOL := FALSE;	(* Starts rotating the axis at constant speed with CW direction *)
+	bJogBack2				 	: BOOL := FALSE;	(* Starts rotating the axis at constant speed with CCCW direction *)
+	bReset2					 	: BOOL := FALSE;	(* Resets the axis *)
+	bHalt2					 	: BOOL := FALSE;	(* Stops the axis *)
+	bStop2					 	: BOOL := FALSE;	(* Stops the axis *)
+	bestop2					 	: BOOL := TRUE;		(* ESTOP button status *)
+	bMove_Jog2				 	: BOOL := FALSE;	(* Starts actual motion *)
+	bJogC2					 	: BOOL := FALSE;	(* Final Jog flag *)
+	position2 					: UDINT;
+*)	
+// RELAY CONTROL VARIABLES
+	bRelay1	AT %Q*			 	: BOOL := FALSE;
+	bRelay2	AT %Q*				: BOOL := FALSE;
+	
+// 4...20mA ANALOG INPUT VARIABLES
+	aiPress01 AT %I*			: INT;
+	aiPress02 AT %I*			: INT;	
+	aiPress03 AT %I*			: INT;	
+	aiPress04 AT %I*			: INT;
+	aiHBX01 AT %I*				: INT;
+	
+// RTD TEMPERATURE VARIABLES
+	rtd01						: INT;
+	rtd02						: INT;
+	
+// 0-10V ANALOG INPUT VARIABLES
+	flow01 AT %I*				: INT;
+	aiV02	AT %I*				: INT;
+	
+// PID VARIABLES
+	TargetPos AT %Q*			: LREAL;
+	
+// 2Ch RTD VARIABLES
+	RTD2Ch1	AT %I*				: INT;
+	RTD2Ch2	AT %I*				: INT;
+	RTD2Ch3	AT %I*				: INT;
+	RTD2Ch4	AT %I*				: INT;
+	RTD2Ch5	AT %I*				: INT;
+	RTD2Ch6	AT %I*				: INT;
+	RTD2Ch7	AT %I*				: INT;
+	RTD2Ch8	AT %I*				: INT;
+	
+// 4Ch RTD VARIABLES
+	RTD4Ch1	AT %I*				: INT;
+	
+END_VAR
+]]></Declaration>
+  </GVL>
+</TcPlcObject>

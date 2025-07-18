@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.6">
+  <DUT Name="DUT_MB" Id="{c3253826-c977-4f56-a3e6-d47d86bf0ac6}">
+    <Declaration><![CDATA[TYPE DUT_MB :
+STRUCT
+	
+	bExecute	:BOOL;	
+	bBusy		:BOOL;
+	bError		:BOOL;
+	nErrId		:UDINT;
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

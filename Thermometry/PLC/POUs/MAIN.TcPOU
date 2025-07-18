@@ -1,0 +1,389 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.7">
+  <POU Name="MAIN" Id="{dd0522d0-2de6-4616-8ca5-ff1eaf6afbeb}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+VAR
+	fbEL6021RTD				: FB_SerialCom;
+	fbEL6021TC				: FB_SerialCom;
+	fbEL6002Flow			: FB_SerialCom;
+	fbEL6021_MB				: FB_SerialCom;
+	fbDoesItWork			: FB_SanityCheck;
+	fbFormatRTD				: FB_FormatTempRTD;
+	fbFormatTC				: FB_FormatTempTC;
+	fbmVtoTemp				: FB_mVtoTemp;
+	fbLedOff				: FB_LedOff;
+	error					: ComError_t;
+	fbPID					: FB_Ploop;
+//	fbCloseValve1			: FB_CloseValve;
+	fbMoveAxis1Rel			: FB_MoveStepperRel;
+	fbMoveAxis1Abs			: FB_MoveStepperAbs;
+	fbStepperLoop			: FB_MoveStepperLoop;
+	
+// Modbus Fan Control Variables
+	Fan1 					: FB_FanModbus; // FB for controlling Ebm Pabst Fan over Modbus
+	fbCCMT4mb				: FB_ValveModbus;
+	fbSetupCCMTmb			: FB_CCMT4Setup;
+	bFanEnable				: BOOL;
+	mbReadAddr				: WORD := 16#D000;
+	mbWriteAddr 			: WORD := 16#D000;
+	mbReadData				: WORD;
+	mbWriteData 			: WORD;
+	smbRPM					: STRING;
+	mbRPM					: WORD;
+	tachometerData 			: REAL;
+	speedNominal 			: REAL;
+	
+// Stepper Variables
+	bJogFwd					: BOOL;
+	bJogBack				: BOOL;
+	bJogDone				: BOOL;
+	bValve1Closed			: BOOL;
+
+// Modbus Valve Variables
+	percentOD				: STRING;
+	cmdOD					: REAL;
+	btnMbActivate 			: BOOL := FALSE;
+	ccmtPos					: WORD;
+	sCCMTPos				: STRING;
+	bSetupComplete			: BOOL := 0;
+
+// Misc. Variables	
+	sVaporQual				: STRING;
+	sTemp01					: STRING;
+	sTemp02					: STRING;
+	sPress01				: STRING;
+	sPress02				: STRING;
+	sPress03				: STRING;
+	sPress04				: STRING;
+	SurfaceRTD1 			: STRING;
+	SurfaceRTD2 			: STRING;
+	sStepperGoTo			: STRING;
+	sStepperNumSteps		: STRING;
+	RTDorTC					: BOOL;
+	
+	bTest					: BOOL := FALSE;
+	TEST					: BOOL := FALSE;
+
+///////////////////////////////////////////////////////////////////////
+//Function16
+	_MBWriteRegs	:FB_MBWriteRegs;
+	MBWriteRegs		:DUT_MB;
+	ar2				:ARRAY[0..99] OF INT;
+	
+	//Function3
+	_MBReadRegs		:FB_ModBusTCPReadRegs;
+	MBReadRegs		:DUT_MBReads;
+	ar1				:ARRAY[0..99] OF INT;
+	
+	sIPAddr:STRING(15):='192.168.000.001';
+
+
+
+END_VAR
+VAR_INPUT
+	fbAxis1					: FB_StepperCtrl;
+	fbAxis2					: FB_StepperCtrl;
+	msgOutRTD				: STRING;
+	msgOutTC				: STRING;
+	msgOutFlow				: STRING;
+	TempRaw					: STRING;
+	MoveTo					: UDINT;
+	StepsToMove				: UDINT;
+	bMoveRelative			: BOOL := FALSE;
+	bMoveAbsolute			: BOOL := FALSE;
+END_VAR
+VAR_OUTPUT
+	bDirection				: BOOL;
+END_VAR]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[///////////////////////////////////////////
+// CLOSE VALVES ON STARTUP
+///////////////////////////////////////////
+//WHILE bValve1Closed <> TRUE DO
+//	fbCloseValve1(bDone => bValve1Closed); 
+//END_WHILE
+
+// CCMT 4 Modbus Setup Routine
+IF bSetupComplete = 0 THEN
+	fbSetupCCMTmb(bSetupComplete => bSetupComplete);
+END_IF
+
+
+///////////////////////////////////////////
+// CALL RS-485 ROUTINE
+///////////////////////////////////////////
+Background();
+
+///////////////////////////////////////////
+// RTD AND TC TEMP READINGS
+///////////////////////////////////////////
+
+fbEL6021RTD(
+	TxBuffer := TxBufferEL_RTD,
+	RxBuffer := RxBufferEL_RTD,
+	msgOUT => msgOutRTD,
+	prefix := '°C',
+	suffix := ','
+);
+
+fbFormatRTD(
+	sTempRaw := msgOutRTD, 
+);
+	
+fbEL6021TC(
+	TxBuffer := TxBufferEL_TC,
+	RxBuffer := RxBufferEL_TC,
+	msgOUT => msgOutTC,
+	prefix := 'mV',
+	suffix := ','
+);
+	
+fbFormatTC(
+	sTempRaw := msgOutTC
+);
+
+fbmVtoTemp(mVtempArray := fbFormatTC.tempArray);
+fbmVtoTemp(T_cj := (INT_TO_LREAL(GVL.RTD4Ch1) / 10));
+
+///////////////////////////////////////////
+// FLOW METER RS-232
+///////////////////////////////////////////
+
+fbEL6002Flow(
+	TxBuffer := TxBufferEL_Flow,
+	RxBuffer := RxBufferEL_Flow,
+	msgOUT => msgOutFlow,
+	prefix := ,//'$N',
+	suffix := //'$R'
+);
+
+///////////////////////////////////////////
+// CALL BLINKENLIGHTS SANITY CHECK
+///////////////////////////////////////////
+fbDoesItWork();
+
+///////////////////////////////////////////
+// CALL VALVE PID CONTROL
+///////////////////////////////////////////
+fbPID(
+		fSetPointValue := 100
+);
+
+///////////////////////////////////////////
+// FORMAT AHU BOARD DATA FOR GUI
+///////////////////////////////////////////
+sVaporQual := TO_STRING(20 - 16 * (INT_TO_REAL(GVL.aiHBX01) / 32767));
+sPress01 := TO_STRING(100 * (INT_TO_REAL((GVL.aiPress01) * 2) / 65536));
+sPress02 := TO_STRING(100 * (INT_TO_REAL((GVL.aiPress02) * 2) / 65536));
+sPress03 := TO_STRING(100 * (INT_TO_REAL((GVL.aiPress03) * 2) / 65536));
+sPress04 := TO_STRING(100 * (INT_TO_REAL((GVL.aiPress04) * 2) / 65536));
+SurfaceRTD1 := TO_STRING(INT_TO_REAL(GVL.RTD2Ch1) / 10);
+SurfaceRTD2 := TO_STRING(INT_TO_REAL(GVL.RTD2Ch2) / 10);
+
+IF bJogFwd = TRUE THEN
+	fbAxis1(bJogFwd := TRUE, bJogBack := FALSE, bJogDone => bJogDone);
+END_IF
+
+IF bJogBack = TRUE THEN
+	fbAxis1(bJogBack := TRUE, bJogFwd := FALSE, bJogDone => bJogDone);
+END_IF
+
+IF (bJogFwd = FALSE AND bJogBack = FALSE) OR bJogDone = TRUE THEN
+	fbAxis1(bJogFwd := FALSE, bJogBack := FALSE);
+END_IF
+
+IF bMoveRelative = TRUE THEN
+	fbMoveAxis1Rel(
+		stepsToMove := STRING_TO_INT(sStepperNumSteps)
+	);
+END_IF
+
+IF bMoveAbsolute = TRUE THEN
+	fbMoveAxis1Abs(
+		stepsToMove := STRING_TO_INT(sStepperGoTo)
+	);
+END_IF
+
+IF TEST = TRUE THEN
+	fbStepperLoop(
+		stepsToMove := STRING_TO_INT(sStepperGoTo)
+	);
+END_IF
+
+///////////////////////////////////////////
+// FAN CONTROL
+///////////////////////////////////////////
+
+
+IF bFanEnable = TRUE THEN
+	Fan1(
+	f_mbReadAddr := mbReadAddr,
+	f_mbWriteAddr := mbWriteAddr,
+	f_mbWriteData := mbWriteData,
+	f_mbRPM := TO_WORD(smbRPM),
+	//f_state := state,
+	//f_nextState := nextState,
+	f_mbReadData => mbReadData,
+	f_tachometerData => tachometerData,
+	f_speedNominal => speedNominal
+);
+ELSE
+	Fan1(
+	f_mbReadAddr := mbReadAddr,
+	f_mbWriteAddr := mbWriteAddr,
+	f_mbWriteData := mbWriteData,
+	f_mbRPM := 0,
+	//f_state := state,
+	//f_nextState := nextState,
+	f_mbReadData => mbReadData,
+	f_tachometerData => tachometerData,
+	f_speedNominal => speedNominal
+);
+END_IF
+
+// CCMT 4 Modbus Control
+
+cmdOD := ((STRING_TO_REAL(percentOD) / 1100) * 1000);
+IF STRING_TO_REAL(percentOD) > 1100 THEN
+	percentOD := '1100';
+END_IF
+IF cmdOD > 1000 THEN
+	cmdOD := 1000;
+END_IF
+IF cmdOD < 0 THEN
+	cmdOD := 0;
+END_IF
+
+IF btnMbActivate = TRUE THEN
+	fbCCMT4mb(
+		posData := REAL_TO_WORD(cmdOD),
+		posActualData => ccmtPos
+		);
+		sCCMTPos := WORD_TO_STRING(ccmtPos);
+ELSE
+	fbCCMT4mb(
+		posData := 0,
+		posActualData => ccmtPos
+		);
+		sCCMTPos := WORD_TO_STRING(ccmtPos);
+END_IF
+
+fbLedOff();
+fbEL6021_MB(
+	RxBuffer := GVL.RxBufferEL_MB, 
+	TxBuffer := GVL.TxBufferEL_MB
+);
+
+]]></ST>
+    </Implementation>
+    <LineIds Name="MAIN">
+      <LineId Id="2267" Count="1" />
+      <LineId Id="2163" Count="0" />
+      <LineId Id="2167" Count="1" />
+      <LineId Id="2164" Count="0" />
+      <LineId Id="3049" Count="3" />
+      <LineId Id="3048" Count="0" />
+      <LineId Id="2165" Count="1" />
+      <LineId Id="1342" Count="1" />
+      <LineId Id="1341" Count="0" />
+      <LineId Id="788" Count="0" />
+      <LineId Id="1344" Count="2" />
+      <LineId Id="1223" Count="0" />
+      <LineId Id="2063" Count="0" />
+      <LineId Id="14" Count="0" />
+      <LineId Id="718" Count="0" />
+      <LineId Id="16" Count="0" />
+      <LineId Id="19" Count="0" />
+      <LineId Id="1216" Count="1" />
+      <LineId Id="20" Count="0" />
+      <LineId Id="1225" Count="0" />
+      <LineId Id="1227" Count="1" />
+      <LineId Id="1765" Count="0" />
+      <LineId Id="1763" Count="0" />
+      <LineId Id="1211" Count="3" />
+      <LineId Id="1218" Count="1" />
+      <LineId Id="1209" Count="0" />
+      <LineId Id="1234" Count="0" />
+      <LineId Id="1236" Count="1" />
+      <LineId Id="1235" Count="0" />
+      <LineId Id="1673" Count="0" />
+      <LineId Id="1672" Count="0" />
+      <LineId Id="1857" Count="0" />
+      <LineId Id="2577" Count="10" />
+      <LineId Id="2576" Count="0" />
+      <LineId Id="1347" Count="2" />
+      <LineId Id="36" Count="0" />
+      <LineId Id="2" Count="0" />
+      <LineId Id="1350" Count="2" />
+      <LineId Id="1333" Count="2" />
+      <LineId Id="1327" Count="0" />
+      <LineId Id="1353" Count="2" />
+      <LineId Id="1337" Count="3" />
+      <LineId Id="2590" Count="0" />
+      <LineId Id="2589" Count="0" />
+      <LineId Id="1336" Count="0" />
+      <LineId Id="2593" Count="0" />
+      <LineId Id="2400" Count="1" />
+      <LineId Id="2406" Count="0" />
+      <LineId Id="2403" Count="0" />
+      <LineId Id="2408" Count="2" />
+      <LineId Id="2407" Count="0" />
+      <LineId Id="2412" Count="0" />
+      <LineId Id="2411" Count="0" />
+      <LineId Id="2413" Count="1" />
+      <LineId Id="2522" Count="0" />
+      <LineId Id="2521" Count="0" />
+      <LineId Id="2657" Count="0" />
+      <LineId Id="2689" Count="0" />
+      <LineId Id="2662" Count="0" />
+      <LineId Id="2524" Count="0" />
+      <LineId Id="2651" Count="2" />
+      <LineId Id="2693" Count="0" />
+      <LineId Id="2663" Count="0" />
+      <LineId Id="2650" Count="0" />
+      <LineId Id="2666" Count="0" />
+      <LineId Id="2665" Count="0" />
+      <LineId Id="2667" Count="0" />
+      <LineId Id="2691" Count="0" />
+      <LineId Id="2679" Count="0" />
+      <LineId Id="2668" Count="0" />
+      <LineId Id="2051" Count="0" />
+      <LineId Id="791" Count="1" />
+      <LineId Id="790" Count="0" />
+      <LineId Id="793" Count="0" />
+      <LineId Id="1559" Count="0" />
+      <LineId Id="1558" Count="0" />
+      <LineId Id="1562" Count="9" />
+      <LineId Id="1560" Count="0" />
+      <LineId Id="1572" Count="0" />
+      <LineId Id="1574" Count="9" />
+      <LineId Id="1573" Count="0" />
+      <LineId Id="1561" Count="0" />
+      <LineId Id="2855" Count="0" />
+      <LineId Id="2766" Count="0" />
+      <LineId Id="2857" Count="0" />
+      <LineId Id="2856" Count="0" />
+      <LineId Id="3053" Count="2" />
+      <LineId Id="2860" Count="5" />
+      <LineId Id="2859" Count="0" />
+      <LineId Id="2761" Count="0" />
+      <LineId Id="3030" Count="2" />
+      <LineId Id="2878" Count="0" />
+      <LineId Id="3039" Count="0" />
+      <LineId Id="2971" Count="0" />
+      <LineId Id="3023" Count="0" />
+      <LineId Id="3028" Count="0" />
+      <LineId Id="3033" Count="0" />
+      <LineId Id="3029" Count="0" />
+      <LineId Id="3040" Count="0" />
+      <LineId Id="2769" Count="0" />
+      <LineId Id="3134" Count="0" />
+      <LineId Id="3133" Count="0" />
+      <LineId Id="3136" Count="0" />
+      <LineId Id="3138" Count="0" />
+      <LineId Id="3137" Count="0" />
+      <LineId Id="3139" Count="1" />
+      <LineId Id="2985" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

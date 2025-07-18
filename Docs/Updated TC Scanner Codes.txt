@@ -1,0 +1,50 @@
+Assign Node Address
+    Op Code: 0x42
+    Data:
+         uint8 new_address // The new address of that node
+
+Broadcast Assign Node Address
+    Op Code: 0x43
+    Data:
+        uint8 new_address // The new address of any node that receives this broadcast message
+
+Query UID
+    Op Code: 0x11
+    Data:
+        None
+    Response:
+	Unique ID - 6 bytes, hex value; Firmware type, 1 byte, hex value; Network node type, 1 byte, hex value; Options code, 1 byte, hex value; Network node options, 1 byte, hex value;
+	Firmware name, firmare verison, ASCII.
+
+Flash LED
+    Op Code:  0x44
+    Data:
+        bool flash // If true, the LED will be flashing at 2Hz-ish (enough that it is clearly visible), false LED is off; Green = OP, Red = bootloader, Green/Red = Run w/ error, solid red 		= Bootloader error 
+
+Query 31 Sample Data (plus shorted channel zero)
+    Command:
+        Op Code: 0x1F
+        Data:
+           byte status
+                0-31: Channel number (if zero scan all channels, otherwise only scan selected channel)
+	   bit 5, high, use calibrated constant
+
+    Response:
+        Op Code: 0x1F
+        Data:
+            1 byte status
+                0-31: Channel number (if zero scan all channels, otherwise only scan selected channel)
+	   	bit 5, high, use calibrated constant
+                0x80: All channels have been sampled since last query (1 is true, 0 is false)
+                1 byte: Query Count (increments each time data is queried)
+            	float32[32] samples_volt
+
+Claibration constant
+	Command:
+		Op Code: 0x6F
+		Float, calibration constant
+
+	Response:
+		Float, calibration constant
+
+

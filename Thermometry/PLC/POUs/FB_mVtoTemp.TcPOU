@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4024.9">
+  <POU Name="FB_mVtoTemp" Id="{9f29af5b-1c7d-47f7-8441-21371990c2d3}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_mVtoTemp
+VAR
+	Index					: INT := 0;
+	test					: STRING;
+	
+// Constants for t < 0
+	t0_1					: LREAL := -6.0000000E+01;
+	v0_1					: LREAL := -2.1528350E+00;
+	p1_1					: LREAL := 3.0449332E+01;
+	p2_1					: LREAL := -1.2946560E+00;
+	p3_1					: LREAL := -3.0500735E+00;
+	p4_1					: LREAL := -1.9226856E-01;
+	q1_1					: LREAL := 6.9877863E-03;
+	q2_1					: LREAL := -1.0596207E-01;
+	q3_1					: LREAL := -1.0774995E-02;
+
+// Constants for t >= 0
+	t0_2					: LREAL := 1.3500000E+02;
+	v0_2					: LREAL := 5.9588600E+00;
+	p1_2					: LREAL := 2.0325591E+01;
+	p2_2					: LREAL := 3.3013079E+00;
+	p3_2					: LREAL := 1.2638462E-01;
+	p4_2					: LREAL := -8.2883695E-04;
+	q1_2					: LREAL := 1.7595577E-01;
+	q2_2					: LREAL := 7.9740521E-03;
+	q3_2					: LREAL := 0;
+	
+// Cold junction compensation constants	
+	v_cj					: LREAL;
+	
+	t0_cj					: LREAL := 2.5000000E+01;
+	v0_cj					: LREAL := 9.9198279E-01;
+	p1_cj					: LREAL := 4.0716564E-02;
+	p2_cj					: LREAL := 7.1170297E-04;
+	p3_cj					: LREAL := 6.8782631E-07;
+	p4_cj					: LREAL := 4.3295061E-11;
+	q1_cj					: LREAL := 1.6458102E-02;
+	q2_cj					: LREAL := 0.0000000E+00;
+	
+	Vtc						: LREAL;
+	Vm						: LREAL;
+END_VAR
+VAR_INPUT
+	mVtempArray 			: ARRAY[0..31] OF STRING;
+	sResult					: STRING;
+	T_cj					: LREAL;
+END_VAR
+VAR_OUTPUT
+	degCtempArray			: ARRAY[0..31] OF STRING;
+	degCtemp				: STRING;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[Vm := STRING_TO_REAL(mVtempArray[Index]);
+v_cj := (v0_cj + (T_cj - t0_cj) * (p1_cj + (T_cj - t0_cj) )* (p2_cj + (T_cj - t0_cj) * (p3_cj + p4_cj * (T_cj - t0_cj)))) / (1 + (T_cj - t0_cj) * (q1_cj + q2_cj * (T_cj - t0_cj))); 
+Vtc := Vm;// + v_cj;
+	
+IF Vtc < 0 THEN		
+	degCtempArray[Index] := LREAL_TO_FMTSTR(t0_1 + ((((Vtc - v0_1) *(p1_1 + (Vtc - v0_1) *(p2_1 + (Vtc - v0_1) * (p3_1 + p4_1 * (Vtc - v0_1)))))) / ((1 + (Vtc - v0_1) *(q1_1 + (Vtc - v0_1) *(q2_1 + q3_1 * (Vtc - v0_1)))))), 6 , TRUE);
+ELSE
+	degCtempArray[Index] := LREAL_TO_FMTSTR(t0_2 + ((((Vtc - v0_2) *(p1_2 + (Vtc - v0_2) *(p2_2 + (Vtc - v0_2) * (p3_2 + p4_2 * (Vtc - v0_2)))))) / ((1 + (Vtc - v0_2) *(q1_2 + (Vtc - v0_2) *(q2_2 + q3_2 * (Vtc - v0_2)))))), 6, TRUE);
+END_IF
+
+Index := Index + 1;
+IF Index > 31 THEN
+	Index := 0;
+END_IF
+
+(*
+mV := STRING_TO_REAL(test);
+IF mv < 0 THEN		
+	degCtemp := LREAL_TO_FMTSTR(t0_1 + ((((mV - v0_1) *(p1_1 + (mV - v0_1) *(p2_1 + (mV - v0_1) *(p3_1 + p4_1 * (mV - v0_1)))))) / ((1 + (mV - v0_1) *(q1_1 + (mV - v0_1) *(q2_1 + q3_1 * (mV - v0_1)))))), 6 , TRUE);
+ELSE
+	degCtemp := LREAL_TO_FMTSTR(t0_2 + ((((mV - v0_2) *(p1_2 + (mV - v0_2) *(p2_2 + (mV - v0_2) *(p3_2 + p4_2 * (mV - v0_2)))))) / ((1 + (mV - v0_2) *(q1_2 + (mV - v0_2) *(q2_2 + q3_2 * (mV - v0_2)))))), 6, TRUE);
+END_IF
+*)]]></ST>
+    </Implementation>
+    <LineIds Name="FB_mVtoTemp">
+      <LineId Id="210" Count="0" />
+      <LineId Id="429" Count="0" />
+      <LineId Id="480" Count="0" />
+      <LineId Id="430" Count="0" />
+      <LineId Id="124" Count="0" />
+      <LineId Id="126" Count="0" />
+      <LineId Id="211" Count="0" />
+      <LineId Id="226" Count="0" />
+      <LineId Id="213" Count="0" />
+      <LineId Id="353" Count="0" />
+      <LineId Id="352" Count="0" />
+      <LineId Id="310" Count="2" />
+      <LineId Id="417" Count="0" />
+      <LineId Id="394" Count="3" />
+      <LineId Id="406" Count="1" />
+      <LineId Id="393" Count="0" />
+      <LineId Id="392" Count="0" />
+    </LineIds>
+  </POU>
+</TcPlcObject>

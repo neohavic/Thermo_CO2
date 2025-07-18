@@ -1,0 +1,52 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4026.7">
+  <POU Name="FB_ModBusTCPWriteRegs" Id="{99f118f7-856e-4479-b130-f45923d03e5c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FB_ModBusTCPWriteRegs
+VAR_INPUT
+    sIPAddr    			: STRING(15);
+    nTCPPort   			: UINT:= MODBUS_TCP_PORT;
+    nUnitID    			: BYTE:=16#FF;
+    nQuantity  			: WORD;
+    nMBAddr    			: WORD;
+    cbLength   			: UDINT;
+    pDestAddr  			: POINTER TO BYTE;
+    bExecute   			: BOOL;
+    tTimeout   			: TIME;
+END_VAR 
+VAR_OUTPUT
+    bBUSY      			: BOOL;
+    bError     			: BOOL;
+    nErrId     			: UDINT;
+    cbRead     			: UDINT;
+END_VAR 
+VAR
+    fbWriteRegs        	: FB_MBWriteRegs;
+    bReadRegs         	: BOOL;
+    bReadRegsBusy     	: BOOL;
+    bReadRegsError    	: BOOL;
+    nReadRegsErrorId  	: UDINT;
+    nReadRegsCount    	: UDINT;
+    arrData2           	: ARRAY [1..2] OF WORD;
+END_VAR 
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbWriteRegs(
+	sIPAddr := sIPAddr,						//Is a string containing the IP address of the target device
+	nTCPPort := MODBUS_TCP_PORT,			//Port number of the target device
+	nUnitID := 255,							//Identification number of a serial sub-network device, 16$FF if TCP/IP is used
+	nQuantity := 2,							//Number of output registers (data words) to be write. The value of nQuantity must be > 0
+	nMBAddr := 0,							//Start address of the output registers to be write (word offset)
+	cbLength := SIZEOF(arrData2),			//Contains the max. byte size of the source buffer. T
+	pSrcAddr := ADR(arrData2),				//Contains the address of the source buffer containing the data to be written
+	bExecute := fbWriteRegs.bExecute,		//The function block is activated by a rising edge at this input.
+	tTimeout := T#1S,						//States the length of the timeout that may not be exceeded by execution of the ADS command
+	bBusy => fbWriteRegs.bBusy,				//When the function block is activated this output is set
+	bError => fbWriteRegs.bError,			//If an ADS error should occur during the transfer of the command
+	nErrId => fbWriteRegs.nErrId				//Supplies the ADS error number when the bError output is set
+	);]]></ST>
+    </Implementation>
+    <LineIds Name="FB_ModBusTCPWriteRegs">
+      <LineId Id="1" Count="13" />
+    </LineIds>
+  </POU>
+</TcPlcObject>
